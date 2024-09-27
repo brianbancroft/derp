@@ -1,10 +1,13 @@
-import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
 
 import bcrypt from "bcryptjs";
 
 window.bcrypt = bcrypt;
+
+// get bearer token from localstorage
+
+const token = localStorage.getItem("bearer-token");
 
 // Function to hash and encode password
 const hashAndEncodePassword = async (password) => {
@@ -15,34 +18,6 @@ const hashAndEncodePassword = async (password) => {
 };
 
 function App() {
-  const [count, setCount] = useState(0);
-
-  async function test() {
-    const payload = {
-      password: {
-        username: "test123",
-        hash: await hashAndEncodePassword("password123"),
-        email: "test123@mailinator.com",
-        userId: "12345",
-      },
-    };
-
-    window.payload = payload;
-
-    const endpoint = `http://localhost:3000/auth/users`;
-
-    // post request
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    console.log(response);
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
     const form = e.target;
@@ -51,14 +26,15 @@ function App() {
     const username = formData.get("username");
     const email = formData.get("email");
     const userId = formData.get("userId");
+    const bearerToken = formData.get("bearerToken");
+
+    localStorage.setItem("bearer-token", bearerToken);
 
     const payload = {
-      password: {
-        username,
-        hash: await hashAndEncodePassword(password),
-        email,
-        userId,
-      },
+      username,
+      hash: await hashAndEncodePassword(password),
+      email,
+      userId,
     };
 
     console.log("payload", payload);
@@ -70,6 +46,7 @@ function App() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${bearerToken}`,
       },
       body: JSON.stringify(payload),
     });
@@ -92,13 +69,15 @@ function App() {
     <div className="App">
       <form onSubmit={handleSubmit} className="super-form">
         <label htmlFor="password">Password:</label>
-        <input type="password" name="password" />
+        <input required type="password" name="password" />
         <label htmlFor="username">Username:</label>
-        <input type="text" name="username" />
+        <input required type="text" name="username" />
         <label htmlFor="email">Email:</label>
-        <input type="email" name="email" />
+        <input required type="email" name="email" />
         <label htmlFor="userId">User ID:</label>
-        <input type="text" name="userId" />
+        <input required type="text" name="userId" />
+        <label htmlFor="bearerToken">Bearer Token</label>
+        <input required type="text" name="bearerToken" defaultValue={token} />
         <button type="submit">Submit</button>
       </form>
       <div>
@@ -109,16 +88,6 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={test}>push the button</button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </div>
   );
 }
